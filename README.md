@@ -7,8 +7,8 @@ Este proyecto en C tiene como objetivo desarrollar un sistema de matriculación 
 - Buscar vehículos por placa.
 - Listar todos los vehículos matriculados.
 - Mantener la información persistente mediante el uso de archivos.
-NOTA:
-El sistema también incluye control de acceso mediante autenticación de usuarios.
+##NOTA:
+##El sistema también incluye control de acceso mediante autenticación de usuarios.
 ---
 
 ## 🛠️ Tecnologías y herramientas
