@@ -1,14 +1,16 @@
 # 🚗 Sistema Integral de Matriculación Vehicular
 # 🚗 ------------PoliDrive---------------------
-##-----Objetivo del proyecto---------
-Este proyecto en C tiene como objetivo desarrollar un sistema de matriculación vehicular paracida a la que funciona actualmente en el Ecuador que permita:
-- Registrar vehículos con validación de datos del usuario y del auto a registrar.
-- Registrar el cumplimiento de revisiones técnicas.
-- Buscar vehículos por placa.
-- Listar todos los vehículos matriculados.
-- Mantener la información persistente mediante el uso de archivos.
-##NOTA:
-##El sistema también incluye control de acceso mediante autenticación de usuarios.
+# Objetivo del proyecto
+
+Este proyecto en C tiene como objetivo desarrollar un sistema de matriculación vehicular parecida a la que funciona actualmente en el Ecuador que permita:
+
+- Registrar vehículos con validación de datos del usuario y del auto a registrar
+- Registrar el cumplimiento de revisiones técnicas
+- Buscar vehículos por placa
+- Listar todos los vehículos matriculados
+- Mantener la información persistente mediante el uso de archivos
+
+**NOTA:** El sistema también incluye control de acceso mediante autenticación de usuarios.
 ---
 
 ## 🛠️ Tecnologías y herramientas
