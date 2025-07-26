@@ -22,6 +22,15 @@ typedef struct {
 	int opcion;
 	int revision1, revision2, revisionActual;
 	int revisionRegistrada;
+	int revisionesAprobadas;
+	// Campos ampliados para revisiones
+	struct {
+		int puntaje;
+		char fecha[11]; // Formato DD-MM-AAAA
+		float descuentoAplicado; // % de descuento obtenido
+		int aprobada; // 1 si aprobó, 0 si no
+	} revisionAnterior[2]; // Para las 2 revisiones anteriores
+	float descuentoPorHistorial; // Descuento acumulado por buen historial
 } vehiculo;
 
 // Funciones principales
@@ -29,6 +38,7 @@ void limpiarPantalla();
 void registroVehiculo(vehiculo *veh, vehiculo *vehiculos, int total);
 float calcularAvaluo(vehiculo v);
 float calcularValorMatricula(vehiculo v);
+void mostrarHistorialRevisiones(vehiculo v);
 int evaluarRevisionTecnica(vehiculo *v);
 void registrarRevisionTecnica(vehiculo *vehiculos, int total);
 void buscarPorPlaca(vehiculo *vehiculos, int total);

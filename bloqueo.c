@@ -1,14 +1,16 @@
+//Librerías estándar
 #include <stdio.h>
 #include <string.h>
 #include "bloqueo.h"
 #include "ingreso.h"
 
+//Declaración de variables
 int realizadoOpcion1 = 0;
 int realizadoOpcion2 = 0;
 int realizadoOpcion3 = 0;
 int realizadoOpcion4 = 0;
 
-
+//Función para imprimir centrado el texto
 void imprimirCentrado(const char* texto) {
 	int ancho = 80;
 	int espacios = (ancho - strlen(texto)) / 2;
@@ -18,6 +20,7 @@ void imprimirCentrado(const char* texto) {
 	printf("%s\n", texto);
 }
 
+//Función de bloqueo
 int validarOpcion2(){
 	if (!realizadoOpcion1){
 		imprimirCentrado("Primero debe realizar opcion 1.\n");

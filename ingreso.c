@@ -1,9 +1,11 @@
+//Librerías estándar
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <conio.h>
 #include "ingreso.h"
 
+//Declaración de constantes
 #define MAX_LINEA 100
 #define MAX_USUARIO 50
 #define MAX_CLAVE 50
@@ -59,6 +61,7 @@ int autenticar(const char *usuario, const char *clave) {
 	return 2; // Usuario no encontrado
 }
 
+//Función para registrar el Usuario
 int registrarUsuario(const char *usuario, const char *clave) {
 	FILE *archivo = fopen("usuarios.txt", "a"); // Abrir en modo añadir
 	if (archivo == NULL) {
@@ -68,5 +71,39 @@ int registrarUsuario(const char *usuario, const char *clave) {
 	
 	fprintf(archivo, "%s:%s\n", usuario, clave);
 	fclose(archivo);
-	return 1;
+	
+	limpiarPantalla();
+	
+	printf("\n --------Nuevo usuario del sistema: %s--------\n", usuario); 
+	//Solicitar autenticación inmediata
+	char usuarioIngreso[MAX_USUARIO];
+	char claveIngreso[MAX_CLAVE];
+	int intentos=0;
+	int resultado;
+	
+	do{
+		printf("\n Ingrese su usuario: ");
+		scanf("%s", usuarioIngreso);
+		
+		printf("Ingrese su clave: ");
+		leerContrasena(claveIngreso, MAX_CLAVE);
+		
+		resultado = autenticar(usuarioIngreso, claveIngreso);
+		
+		if (resultado == 1){
+			printf("\n ¡Autentificación exitosa! Bienvenido de nuevo, %s. \n", usuarioIngreso);
+			return 1;
+		} else if (resultado == 0){
+			limpiarPantalla();
+			printf("\nClave incorrecta. Intente nuevamente. \n");
+		}else if (resultado == 2){
+			limpiarPantalla();
+			printf("\nUsuario no encontrado. Intente nuevamente. \n");
+		}
+		
+		intentos++;
+	} while(intentos< MAX_INTENTOS);
+	
+	printf("\nNúmero máximo de intentos alcanzado. \n");
+	return 0;
 }

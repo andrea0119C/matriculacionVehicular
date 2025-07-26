@@ -85,9 +85,10 @@ int validarRetencion(int opcion){
 
 //Función auxiliar para validar multas
 int validarMultas(int opcion){
-	return ( opcion == 0 || opcion == 1 || opcion == 2 || opcion == 3);
+	return (opcion >= 0 && opcion <= 3);
 }
 
+//Función validar enteros
 int leerEnteroLimpio(const char *entrada, int *valor) {
 	char temp;
 	if (sscanf(entrada, "%d %c", valor, &temp) != 1)
@@ -108,6 +109,13 @@ int leerEnteroLimpio(const char *entrada, int *valor) {
 	return 1;
 }
 
+//Función para limpiar el buffer
+void limpiarBufferExtra(char *entrada) {
+	if (!strchr(entrada, '\n')) {
+		int c;
+		while ((c = getchar()) != '\n' && c != EOF); // Limpiar entrada sobrante
+	}
+}
 
 //Función para registrar los vehículos
 void registroVehiculo(vehiculo *veh, vehiculo *vehiculos, int total){
@@ -115,10 +123,11 @@ void registroVehiculo(vehiculo *veh, vehiculo *vehiculos, int total){
 	int valida=0;
 	int tipoValido;
 	char entrada[10];
+	
 	while(!valida){
 		
 	 
-	printf("Ingrese la placa del vehículo: \n");
+	printf("Ingrese la placa del vehículo (Ejemplo:PHE1234): \n");
 	//Ingrese la placa del vehículo
 	scanf("%s", veh->placa);
 	fflush(stdin);
@@ -147,18 +156,29 @@ void registroVehiculo(vehiculo *veh, vehiculo *vehiculos, int total){
 			}
 		}
 		
-		if (letras && numeros && !placaRepetida) {
+		if(placaRepetida){
+			printf("Este vehículo ya fue registrado.\n");
+		}
+		else if(letras && numeros){
 			valida = 1;
-		} else if (placaRepetida) {
-			printf("Ya existe un vehículo registrado con esa placa.\n");
-		} else {
+		}
+		else{
+			limpiarPantalla();
 			printf("Placa inválida. Intente nuevamente.\n");
 		}
-	} else {
+	}
+	else{
+		limpiarPantalla();
 		printf("La placa debe tener exactamente 7 caracteres.\n");
 	}
 	}
-	
+	memset(&veh->revisionAnterior, 0, sizeof(veh->revisionAnterior));
+	veh->revisionRegistrada = 0;
+	veh->revisionActual = 0;
+	veh->revision1 = 0;
+	veh->revision2 = 0;
+	veh->descuentoPorHistorial = 0.0f;
+	limpiarPantalla();
 		
 		//Ingrese el número de cédula del usuario
 	do {
@@ -170,10 +190,11 @@ void registroVehiculo(vehiculo *veh, vehiculo *vehiculos, int total){
 			strncpy(veh->cedula, buffer, sizeof(veh->cedula));
 			break;
 		} else {
+			limpiarPantalla();
 			printf("Cédula inválida. Debe tener exactamente 10 dígitos numéricos.\n");
 		}
 	} while (1);
-	
+	limpiarPantalla();
 		
 	//Ingrese el año del vehículo
 	do {
@@ -197,23 +218,25 @@ void registroVehiculo(vehiculo *veh, vehiculo *vehiculos, int total){
 				break;
 			}
 		}
+		limpiarPantalla();
 		printf("Año inválido. Debe estar entre 2000 y 2025.\n");
 	} while (1);
-		
+	limpiarPantalla();	
 	//Ingrese el tipo de vehículo
 	do {
 		printf("Ingrese el tipo de vehículo \n 0.-Moto \n 1.-Liviano \n 2.-Mediano \n 3.-Pesado: \n");
 		fgets(entrada, sizeof(entrada), stdin);
+		limpiarBufferExtra(entrada);
 		tipoValido = leerEnteroLimpio(entrada, &veh->tipo);
 		
-		
-		
-		if (tipoValido !=1 || !validarTipo (veh->tipo)) {
-			printf("Tipo inválido. Solo se permite: 0, 1, 2 o 3.\n");
+		if (tipoValido == 1 && validarTipo(veh->tipo)) {
+			break; // válido
+		} else {
+			limpiarPantalla();  // ? Limpia pantalla
+			printf("Tipo inválido. Solo se permite: 0, 1, 2 o 3.\n\n");
 		}
-	} while (tipoValido !=1 || !validarTipo (veh->tipo));
+	} while (1);
 	limpiarPantalla();
- 
 	//Ingrese el subtipo
 	int subtipoIngresado;
 	do{
@@ -233,11 +256,15 @@ void registroVehiculo(vehiculo *veh, vehiculo *vehiculos, int total){
 			break;
 		}
 	 fgets(entrada, sizeof(entrada), stdin);
+		limpiarBufferExtra(entrada);
 		tipoValido = leerEnteroLimpio(entrada, &subtipoIngresado);
-		if (tipoValido !=1 || !validarSubtipo (veh->tipo, subtipoIngresado)) {
-			printf("Opción inválida. Intente de nuevo.Ingresar 0 o 1\n");
+		if (tipoValido == 1 && validarSubtipo(veh->tipo, subtipoIngresado)) {
+			break;
+		} else {
+			limpiarPantalla();
+			printf("Opción inválida. Ingrese 0 o 1.\n\n");
 		}
-		} while(tipoValido !=1 || !validarSubtipo(veh->tipo, subtipoIngresado));
+	} while (1);
 	veh->subtipo = subtipoIngresado;
 	
 	int cilindraje[4][2] ={
@@ -248,81 +275,113 @@ void registroVehiculo(vehiculo *veh, vehiculo *vehiculos, int total){
 	};
 	veh->cilindraje= cilindraje [veh->tipo][veh->subtipo];
 	limpiarPantalla();
+	
+	//Descuento para auto ecológico
 	do{
-	    printf("Es ecológico: \n Ingrese:\n 0.- Si es escológico \n 1.- No es escológico:\n");
+	    printf("El vehículo es ecológico: \n Ingrese:\n 0.- Si es ecológico \n 1.- No es ecológico:\n");
 		fgets(entrada, sizeof(entrada), stdin);
+		limpiarBufferExtra(entrada);
 		tipoValido = leerEnteroLimpio(entrada, &veh->esEcologico);
 	    
-	    if (tipoValido !=1 || !validarDescuento (veh->esEcologico)) {
-		    printf("Opción inválido. Solo se permite:Ingresar 0 o 1.\n");
-	}  
-	} while (tipoValido !=1 || !validarDescuento (veh->esEcologico));
+		if (tipoValido == 1 && validarDescuento(veh->esEcologico)) {
+			break;
+		} else {
+			limpiarPantalla();
+			printf("Opción inválida. Solo se permite ingresar 0 o 1.\n\n");
+		}
+	} while (1);
 	limpiarPantalla();
 	
+	//Descuento por pago anticipado
 	do{
-	    printf("Realizo el pago antes de tiempo: \n Ingrese: \n 0.-Si es correcto \n 1.- No es correcto: \n");
+	    printf("Realizo el usuario el pago antes de tiempo: \n Ingrese: \n 0.- Si es correcto \n 1.- No es correcto: \n");
 		fgets(entrada, sizeof(entrada), stdin);
+		limpiarBufferExtra(entrada);
 		tipoValido = leerEnteroLimpio(entrada, &veh->pagoConAnticipo);
-		if (tipoValido !=1 || !validarDescuento (veh->pagoConAnticipo)) {
-			printf("Opción inválido. Solo se permite:Ingresar 0 o 1.\n");
-		}  
-	} while (tipoValido !=1 || !validarDescuento (veh->pagoConAnticipo));
+		if (tipoValido == 1 && validarDescuento(veh->pagoConAnticipo)) {
+			break;
+		} else {
+			limpiarPantalla();
+			printf("Opción inválida. Solo se permite ingresar 0 o 1.\n\n");
+		}
+	} while (1);
 	limpiarPantalla();
 	
+	//Retención si el pago se hizo a tiempo
 	do{
-	    printf("Paso a la primera revisión técnica: \n Ingrese: \n 0.-Si es correcto \n 1.-No es correcto:\n");
+	    printf("El usuario realizo el pago a tiempo: \n Ingrese: \n 0.- Si es correcto \n 1.- No es correcto:\n");
 		fgets(entrada, sizeof(entrada), stdin);
-		tipoValido = leerEnteroLimpio(entrada, &veh->pasoRevisionTecnica);
-		if (tipoValido !=1 || !validarRetencion (veh->pasoRevisionTecnica)) {
-			printf("Opción inválido. Solo se permite:Ingresar 0 o 1.\n");
-		}  
-	} while (tipoValido !=1 || !validarRetencion (veh->pasoRevisionTecnica));
-	limpiarPantalla();
-	
-	do{
-	    printf("Pago a tiempo: \n Ingrese: \n 0.- Si es correcto \n 1.- No es correcto:\n");
-		fgets(entrada, sizeof(entrada), stdin);
+		limpiarBufferExtra(entrada);
 		tipoValido = leerEnteroLimpio(entrada, &veh->pagoATiempo);
-		if (tipoValido !=1 || !validarRetencion (veh->pagoATiempo)) {
-			printf("Opción inválido. Solo se permite:Ingresar 0 o 1.\n");
-		}  
-	} while (tipoValido !=1 || !validarRetencion (veh->pagoATiempo));
+		if (tipoValido == 1 && validarRetencion(veh->pagoATiempo)) {
+			break;
+		} else {
+			limpiarPantalla();
+			printf("Opción inválida. Solo se permite ingresar 0 o 1.\n\n");
+		}
+	} while (1);
 	limpiarPantalla();
 	
 	// MULTA POR ESTADO ETÍLICO
 	do {
-		printf("Multa por manejar en estado etílico:\n");
-		printf("0.- Sin multa\n1.- Leve \n2.- Moderada \n3.- Grave\n");
+		printf("El usuario tiene multas por manejar en estado etílico:\n");
+		printf("0.- Sin multas\n1.- Leve \n2.- Moderada \n3.- Grave\n");
 		fgets(entrada, sizeof(entrada), stdin);
+		limpiarBufferExtra(entrada);
 		tipoValido = leerEnteroLimpio(entrada, &veh->multaPorEstadoEtilico);
-		if (tipoValido != 1 || !validarMultas(veh->multaPorEstadoEtilico)) {
-			printf("Opción inválida. Solo se permite: 0 a 3.\n");
-		}  
-	} while (tipoValido != 1 || !validarMultas(veh->multaPorEstadoEtilico));
+		if (tipoValido == 1 && validarMultas(veh->multaPorEstadoEtilico)) {
+			break;
+		} else {
+			limpiarPantalla();
+			printf("Opción inválida. Solo se permite ingresar 0 a 3.\n\n");
+		}
+	} while (1);
 	limpiarPantalla();
 	
-	// MULTA POR NO USAR CINTURÓN
+	int mostrarError = 0;
+	// MULTA POR NO USAR CINTURÓN O CASCO
 	do {
-		printf("Multa por no usar cinturón de seguridad:\n");
-		printf("0.- Sin multa\n1.- Un cinturón\n2.- Dos o tres cinturones\n3.- Cuatro o cinco cinturones\n");
+		limpiarPantalla();
+		
+		if (mostrarError) {
+			printf("Opción inválida. Solo se permite ingresar un número del 0 al 3.\n\n");
+			mostrarError = 0; // Ya mostramos el error, lo reseteamos
+		}
+		
+		if (veh->tipo == 0) {
+			printf("Multa por no usar casco:\n");
+			printf("0.- Sin multa\n1.- Casco no abrochado\n2.- Casco inadecuado\n3.- Sin casco\n");
+		} else {
+			printf("Multa por no usar cinturón de seguridad:\n");
+			printf("0.- Sin multa\n1.- Un cinturón\n2.- Dos o tres cinturones\n3.- Cuatro o cinco cinturones\n");
+		}
+		
 		fgets(entrada, sizeof(entrada), stdin);
+		limpiarBufferExtra(entrada);
 		tipoValido = leerEnteroLimpio(entrada, &veh->multaPorSinCinturon);
-		if (tipoValido != 1 || !validarMultas(veh->multaPorSinCinturon)) {
-			printf("Opción inválida. Solo se permite: 0 a 3.\n");
-		}  
-	} while (tipoValido != 1 || !validarMultas(veh->multaPorSinCinturon));
+		
+		if (!(tipoValido && validarMultas(veh->multaPorSinCinturon))) {
+			mostrarError = 1;  // Indicamos que hay error para mostrarlo en la próxima iteración
+		}
+		
+	} while (!(tipoValido && validarMultas(veh->multaPorSinCinturon)));
+	
 	limpiarPantalla();
 	
 	// MULTA POR EXCESO DE VELOCIDAD
 	do {
-		printf("Multa por sobrepasar el límite de velocidad:\n");
-		printf("0.- Sin multa\n1.- Leve \n2.- Moderada\n3.- Grave\n");
+		printf("El usuario tiene multas por sobrepasar el límite de velocidad:\n");
+		printf("0.- Sin multas\n1.- Leve \n2.- Moderada\n3.- Grave\n");
 		fgets(entrada, sizeof(entrada), stdin);
+		limpiarBufferExtra(entrada);
 		tipoValido = leerEnteroLimpio(entrada, &veh->multaPorSobrepasarLimiteDeVelocidad);
-		if (tipoValido != 1 || !validarMultas(veh->multaPorSobrepasarLimiteDeVelocidad)) {
-			printf("Opción inválida. Solo se permite: 0 a 3.\n");
-		}  
-	} while (tipoValido != 1 || !validarMultas(veh->multaPorSobrepasarLimiteDeVelocidad));
+		if (tipoValido == 1 && validarMultas(veh->multaPorSobrepasarLimiteDeVelocidad)) {
+			break;
+		} else {
+			limpiarPantalla();
+			printf("Opción inválida. Solo se permite ingresar 0 a 3.\n\n");
+		}
+	} while (1);
 	limpiarPantalla();
 	
 	veh->avaluo = calcularAvaluo(*veh);
@@ -371,59 +430,209 @@ float calcularAvaluo(vehiculo v){
 		sprintf(fecha, "%02d-%02d-%d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
 		return fecha;
 	}
-	// Función auxiliar para validar entradas
-	int leerPuntaje(const char *mensaje, int min, int max) {
+	
+	// Función auxiliar para verificar entradas
+	int leerEnteroValido(const char *mensaje, int min, int max) {
+		char buffer[100];
 		int valor;
+		int valido = 0;
+		
 		do {
 			printf("%s (%d-%d): ", mensaje, min, max);
-			if (scanf("%d", &valor) != 1) {
-				printf("¡Error! Ingrese un número válido.\n");
-				while (getchar() != '\n');
+			if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
+				printf("Error al leer la entrada.\n");
 				continue;
 			}
-			if (valor < min || valor > max) {
-				printf("¡Error! El valor debe estar entre %d y %d.\n", min, max);
+			
+			// Verificar si la entrada es solo un número sin caracteres adicionales
+			size_t len = strlen(buffer);
+			if (len > 0 && buffer[len-1] == '\n') {
+				buffer[len-1] = '\0'; // Eliminar el salto de línea
+				len--;
 			}
-		} while (valor < min || valor > max);
+			
+			valido = 1;
+			if (len == 0) {
+				valido = 0;
+			} else {
+				for (size_t i = 0; i < len; i++) {
+					if (!isdigit(buffer[i])) {
+						valido = 0;
+						break;
+					}
+				}
+			}
+			
+			if (!valido) {
+				printf("Entrada inválida. Solo se permiten números enteros.\n");
+				continue;
+			}
+			
+			valor = atoi(buffer);
+			if (valor < min || valor > max) {
+				printf("El valor debe estar entre %d y %d.\n", min, max);
+				valido = 0;
+			}
+		} while (!valido);
+		
 		return valor;
+	}
+	
+	//Función para mostrar el historia de revisiones
+	void mostrarHistorialRevisiones(vehiculo v) {
+		printf("\n========== HISTORIAL DE REVISIONES ==========\n");
+		
+		// Primera revisión
+		if (v.revision1 == 0) {
+			printf("1. Primera revisión: NO COMPLETADA\n");
+		} else if (v.revision1 < 70) {
+			printf("1. Primera revisión: %d/100 - REPROBADA\n", v.revision1);
+			printf("   ¡Debe aprobar esta revisión antes de continuar!\n");
+		} else {
+			printf("1. Primera revisión: %d/100 - APROBADA\n", v.revision1);
+		}
+		
+		// Segunda revisión
+		if (v.revision2 == 0) {
+			printf("2. Segunda revisión: NO COMPLETADA\n");
+		} else if (v.revision2 < 70) {
+			printf("2. Segunda revisión: %d/100 - REPROBADA\n", v.revision2);
+			printf("   ¡Debe aprobar esta revisión antes de continuar!\n");
+		} else {
+			printf("2. Segunda revisión: %d/100 - APROBADA\n", v.revision2);
+		}
+		
+		// Revisión actual (si existe)
+		if (v.revisionRegistrada) {
+			printf("\nREVISIÓN ACTUAL: %d/100 - %s\n", 
+				   v.revisionActual,
+				   (v.revisionActual >= 70) ? "APROBADA" : "REPROBADA");
+			
+			if (v.revisionActual < 70) {
+				printf("¡No puede registrar su vehículo hasta aprobar la revisión técnica!\n");
+			}
+		} else {
+			printf("\nREVISIÓN ACTUAL: NO REALIZADA\n");
+		}
+		
+		// Validación general
+		if ((v.revision1 > 0 && v.revision1 < 70) || 
+			(v.revision2 > 0 && v.revision2 < 70)) {
+			printf("\n¡ATENCIÓN! Tiene revisiones reprobadas pendientes.\n");
+			printf("Debe aprobar todas las revisiones anteriores para continuar.\n");
+		} else if (v.revision1 == 0 || v.revision2 == 0) {
+			printf("\n¡ATENCIÓN! Tiene revisiones pendientes por completar.\n");
+			printf("\n----------------------------------\n");
+			}
+	}
+	
+	//Función para otorgar descuento por revisiones anteriores   
+	void calcularBeneficiosPorHistorial(vehiculo *v) {
+		v->descuentoPorHistorial = 0.0f;
+		
+		// Descuento por revisiones anteriores aprobadas
+		int revisionesAprobadas = 0;
+		for(int i = 0; i < 2; i++) {
+			if(v->revisionAnterior[i].aprobada) {
+				revisionesAprobadas++;
+				
+				// Descuento adicional por puntaje alto
+				if(v->revisionAnterior[i].puntaje > 85) {
+					v->descuentoPorHistorial += 2.0f; // 2% adicional por cada revisión con más de 85
+				}
+			}
+		}
+		
+		// Descuento base por historial
+		if(revisionesAprobadas == 2) {
+			v->descuentoPorHistorial += 5.0f; // 5% por tener las 2 revisiones aprobadas
+		} else if(revisionesAprobadas == 1) {
+			v->descuentoPorHistorial += 2.0f; // 2% por tener 1 revisión aprobada
+		}
+		
+		// Límite máximo de descuento
+		if(v->descuentoPorHistorial > 10.0f) {
+			v->descuentoPorHistorial = 10.0f;
+		}
 	}
 	
 	// Función para evaluar las revisiones técnicas
 	int evaluarRevisionTecnica(vehiculo *v) {
+		limpiarPantalla();
 		
-		// Validación para revisiones anteriores
+		// Validación de revisiones anteriores
+		printf("======= VALIDACIÓN DE REVISIONES ANTERIORES =======\n\n");
+		
+		// Primera revisión anterior
 		printf("¿Pasó la PRIMERA revisión técnica? (1 = sí, 0 = no): ");
-		int pasada1;
-		do {
-			if (scanf("%d", &pasada1) != 1) {
-				printf("Entrada no válida. Ingrese 1 (sí) o 0 (no): ");
-				while (getchar() != '\n');
-			}
-		} while (pasada1 != 0 && pasada1 != 1);
+		int pasada1 = leerEnteroValido("", 0, 1);
 		
+		int puntaje1 = 0;
 		if (pasada1) {
-			v->revision1 = leerPuntaje("Ingrese el puntaje obtenido", 0, 100);
+			limpiarPantalla();
+			puntaje1 = leerEnteroValido("Ingrese el puntaje obtenido en la primera revisión ", 0, 100);
+			
+			if (puntaje1 < 70) {
+				limpiarPantalla();
+				printf("¡ERROR! La primera revisión técnica está REPROBADA (puntaje: %d/100)\n", puntaje1);
+				printf("No puede realizar la revisión actual sin aprobar las revisiones anteriores.\n");
+				printf("Por favor complete satisfactoriamente sus revisiones anteriores primero.\n");
+				system("pause"); // Para que el usuario vea el mensaje
+				return 0;
+			}
 		} else {
-			printf("\nDebe realizar la revisión 1 antes de continuar.\n");
-			printf("Por favor regrese cuando haya completado la revisión técnica 1.\n");
-			return 0; // <-- retorna al menú
+			limpiarPantalla();
+			printf("¡ATENCIÓN! No ha completado la primera revisión técnica.\n");
+			printf("Debe realizar y aprobar todas las revisiones anteriores primero.\n");
+			system("pause");
+			return 0;
 		}
 		
+		// Segunda revisión anterior
+		limpiarPantalla();
 		printf("¿Pasó la SEGUNDA revisión técnica? (1 = sí, 0 = no): ");
-		int pasada2;
-		do {
-			if (scanf("%d", &pasada2) != 1) {
-				printf("Entrada no válida. Ingrese 1 (sí) o 0 (no): ");
-				while (getchar() != '\n');
-			}
-		} while (pasada2 != 0 && pasada2 != 1);
+		int pasada2 = leerEnteroValido("", 0, 1);
 		
+		int puntaje2 = 0;
 		if (pasada2) {
-			v->revision2 = leerPuntaje("Ingrese el puntaje obtenido", 0, 100);
+			limpiarPantalla();
+			puntaje2 = leerEnteroValido("Ingrese el puntaje obtenido en la segunda revisión ", 0, 100);
+			
+			if (puntaje2 < 70) {
+				limpiarPantalla();
+				printf("¡ERROR! La segunda revisión técnica está REPROBADA (puntaje: %d/100)\n", puntaje2);
+				printf("No puede realizar la revisión actual sin aprobar las revisiones anteriores.\n");
+				printf("Por favor complete satisfactoriamente sus revisiones anteriores primero.\n");
+				system("pause");
+				return 0;
+			}
 		} else {
-			printf("\nDebe realizar la revisión 2 antes de continuar.\n");
-			printf("Por favor regrese cuando haya completado la revisión técnica 2.\n");
+			limpiarPantalla();
+			printf("¡ATENCIÓN! No ha completado la segunda revisión técnica.\n");
+			printf("Debe realizar y aprobar todas las revisiones anteriores primero.\n");
+			system("pause");
 			return 0;
+		}
+		
+		// Guardar los puntajes en la estructura
+		v->revision1 = puntaje1;
+		v->revision2 = puntaje2;
+		
+		// Registrar beneficios de revisiones anteriores 
+		for(int i = 0; i < 2; i++) {
+			if((i == 0 && pasada1) || (i == 1 && pasada2)) {
+				
+				v->revisionAnterior[i].puntaje = (i == 0) ? v->revision1 : v->revision2;
+				v->revisionAnterior[i].aprobada = (v->revisionAnterior[i].puntaje >= 70);
+				
+				// Calcular descuento aplicado en esa revisión
+				if(v->revisionAnterior[i].aprobada) {
+					v->revisionAnterior[i].descuentoAplicado = (v->revisionAnterior[i].puntaje - 70) * 0.2f; // 0.2% por punto arriba de 70
+					if(v->revisionAnterior[i].descuentoAplicado > 5.0f) {
+						v->revisionAnterior[i].descuentoAplicado = 5.0f;
+					}
+				}
+			}
 		}
 		
 		// Evaluación técnica actual
@@ -434,7 +643,7 @@ float calcularAvaluo(vehiculo v){
 				"Emisiones",
 				"Neumáticos",
 				"Espejos y parabrisas",
-				"Cinturones",
+				"Cinturones/Casco",
 				"Bocina y limpiaparabrisas",
 				"Documentación al día"
 		};
@@ -443,11 +652,18 @@ float calcularAvaluo(vehiculo v){
 		printf("\nEvaluación técnica actual:\n");
 		int puntajeTotal = 0;
 		for (int i = 0; i < 8; i++) {
-			puntajes[i] = leerPuntaje(categorias[i], 0, maxPuntajes[i]);
+			// Cambiamos la pregunta si es moto (tipo 0) y es la categoría 5 (cinturón/casco)
+			if (i == 5 && v->tipo == 0) {  
+				limpiarPantalla();
+				printf("Categoría: Casco (para motocicletas)\n");
+				puntajes[i] = leerEnteroValido("Ingrese puntaje para Casco ", 0, 10);
+			} else {
+				limpiarPantalla();
+				printf("Categoría: %s\n", categorias[i]);
+				puntajes[i] = leerEnteroValido("Ingrese puntaje", 0, maxPuntajes[i]);
+			}
 			puntajeTotal += puntajes[i];
 		}
-		v->revisionActual = puntajeTotal;
-		printf("\nRevisión técnica %s.\n", (puntajeTotal >= 70) ? "APROBADA" : "REPROBADA");
 		
 		// Preguntar al final si desea comprobante
 		int imprimir;
@@ -458,18 +674,26 @@ float calcularAvaluo(vehiculo v){
 				while (getchar() != '\n');
 			}
 		} while (imprimir != 0 && imprimir != 1);
+		v->revisionActual = puntajeTotal;
 		
 		if (!imprimir) {
 			printf("No se generará el comprobante.\n");
 			return (puntajeTotal >= 70);
+			v->revisionActual = puntajeTotal;
 		}
 		// Calcular matrícula antes de imprimir
 		v->matricula = calcularValorMatricula(*v);
+		// Calcular beneficios por historial
+		calcularBeneficiosPorHistorial(v);
+		
+		// Aplicar descuento al avalúo
+		v->avaluo *= (1.0f - v->descuentoPorHistorial/100.0f);
 		
 		// Imprimir comprobante
 		FILE *archivo = fopen("resultado_revision.txt", "w");
 		if (!archivo) {
 			printf("No se pudo crear el archivo de resultados.\n");
+			
 			return (puntajeTotal >= 70);
 		}
 		
@@ -501,12 +725,12 @@ float calcularAvaluo(vehiculo v){
 		printf("Los resultados se han guardado en 'resultado_revision.txt'.\n");
 		system("notepad resultado_revision.txt");
 		
+		v->revisionActual = puntajeTotal;
 		return (puntajeTotal >= 70);
 	}	
-
-
+	
 	// Función para registrar por matrícula las revisiones técnicas
-void registrarRevisionTecnica(vehiculo *vehiculos, int total) {
+	void registrarRevisionTecnica(vehiculo *vehiculos, int total) {
 		char placa[8];
 		int encontrado = 0;
 		
@@ -518,9 +742,10 @@ void registrarRevisionTecnica(vehiculo *vehiculos, int total) {
 			if (strcasecmp(vehiculos[i].placa, placa) == 0) {
 				encontrado = 1;
 				
+				// Verificar si ya se registró la matrícula (revisión aprobada)
 				if (vehiculos[i].revisionRegistrada) {
-					printf("La revisión técnica para este vehículo ya fue registrada.\n");
-					return; // Salir para no registrar otra vez
+					printf("Esta placa ya fue registrada la matrícula.\n");
+					return; // Salir para no permitir registro duplicado
 				}
 				
 				printf("\nVehículo encontrado: %s\n", vehiculos[i].placa);
@@ -532,7 +757,6 @@ void registrarRevisionTecnica(vehiculo *vehiculos, int total) {
 					printf("El vehículo %s ha REPROBADO la revisión técnica.\n", vehiculos[i].placa);
 				}
 				
-				// Marcar que ya se registró la revisión
 				vehiculos[i].revisionRegistrada = 1;
 				break;
 			}
@@ -544,47 +768,72 @@ void registrarRevisionTecnica(vehiculo *vehiculos, int total) {
 	}
 	
 	//Función principal para buscar por placa
-	void buscarPorPlaca(vehiculo *vehiculos, int total){
-		char placaBuscada[8];
-		int encontrado = 0;
-		
-		printf("Ingrese la placa del vehículo a buscar: ");
-		scanf("%s", placaBuscada);
-		fflush(stdin);
-		
-		for(int i = 0; i < total; i++){
-			if(strcasecmp(vehiculos[i].placa, placaBuscada) == 0){
-				printf("\nVehículo encontrado:\n");
-				printf("Cédula: %s\n", vehiculos[i].cedula);
-				printf("Año: %d\n", vehiculos[i].anio);
-				printf("Tipo: %s\n", tipoTexto(vehiculos[i].tipo));
-				printf("Subtipo - Cilindraje: %dcc\n", vehiculos[i].cilindraje);
-				printf("Avalúo: $%.2f\n", vehiculos[i].avaluo);
-				encontrado = 1;
-				break;
-			}
-		}
-		if(!encontrado){
-			printf("No se encontró un vehículo con esa placa.\n");
-		}
-	}
-		
-//Función principal Listar Vehículos
-void listarVehiculos(vehiculo *vehiculos, int total){
-	if(total == 0){
-	printf("No hay vehículos registrados.\n");
-		return;
-	}
+void buscarPorPlaca(vehiculo *vehiculos, int total){
+	char placaBuscada[8];
+	int encontrado = 0;
+	
+	printf("Ingrese la placa del vehículo a buscar: ");
+	scanf("%s", placaBuscada);
+	fflush(stdin);
+	
 	for(int i = 0; i < total; i++){
-	printf("\nVehículo #%d:\n", i+1);
-	printf("Placa: %s\n", vehiculos[i].placa);
-	printf("Cédula: %s\n", vehiculos[i].cedula);
-	printf("Año: %d\n", vehiculos[i].anio);
-	printf("Tipo: %s\n", tipoTexto(vehiculos[i].tipo));
-	printf("Subtipo-cilindraje: %dcc\n", vehiculos[i].cilindraje);
-	printf("Avalúo: $%.2f\n", vehiculos[i].avaluo);
+		if(strcasecmp(vehiculos[i].placa, placaBuscada) == 0){
+			printf("\n==========Vehículo encontrado==========\n");
+			printf("Cédula: %s\n", vehiculos[i].cedula);
+			printf("Año: %d\n", vehiculos[i].anio);
+			printf("Tipo: %s\n", tipoTexto(vehiculos[i].tipo));
+			printf("Subtipo - Cilindraje: %dcc\n", vehiculos[i].cilindraje);
+			printf("Avalúo: $%.2f\n", vehiculos[i].avaluo);
+			
+			// Mostrar estado de aprobación
+			if(vehiculos[i].revisionRegistrada) {
+				printf("Estado de revisión: %s\n", 
+					   (vehiculos[i].revisionActual >= 70) ? "APROBADO" : "REPROBADO");
+				printf("Puntaje de revisión: %d/100\n", vehiculos[i].revisionActual);
+			} else {
+				printf("Estado de revisión: PENDIENTE (no registrada)\n");
+			}
+			// Mostrar historial de revisiones
+			mostrarHistorialRevisiones(vehiculos[i]);
+			
+			encontrado = 1;
+			break;
+		}
+	}
+	if(!encontrado){
+		printf("No se encontró un vehículo con esa placa.\n");
 	}
 }
+//Función principal Listar Vehículos
+	void listarVehiculos(vehiculo *vehiculos, int total) {
+		int contador = 0;
+		
+		for(int i = 0; i < total; i++){
+			// Mostrar solo si aprobó la revisión técnica
+			if (vehiculos[i].revisionRegistrada && vehiculos[i].revisionActual >= 70) {
+				contador++;
+				
+		
+		printf("\n=== LISTADO DE VEHÍCULOS ===\n");
+		
+			printf("\nVehículo #%d:\n", contador);
+			printf("Placa: %s\n", vehiculos[i].placa);
+			printf("Cédula: %s\n", vehiculos[i].cedula);
+			printf("Año: %d\n", vehiculos[i].anio);
+			printf("Tipo: %s\n", tipoTexto(vehiculos[i].tipo));
+			printf("Subtipo-cilindraje: %dcc\n", vehiculos[i].cilindraje);
+			printf("Avalúo: $%.2f\n", vehiculos[i].avaluo);
+			printf("====================================================\n");
+			
+			// Mostrar historial de revisiones
+			mostrarHistorialRevisiones(vehiculos[i]);
+			}
+		}
+		
+		if (contador == 0) {
+			printf("No hay vehículos registrados.\n");
+		}
+	}
 
 //Función principal Calcular valor de matrícula
 float calcularValorMatricula(vehiculo v){
@@ -656,10 +905,15 @@ float calcularValorMatricula(vehiculo v){
 	
 	// Multas con niveles
 	int montosEstadoEtilico[] =     {0, 100, 200, 350};
-	int montosSinCinturon[] =       {0, 25,  50,  100};
+	if (v.tipo == 0) {  // Si es moto
+		int montosSinCasco[] = {0, 50, 100, 200};
+		total += montosSinCasco[v.multaPorSinCinturon]; 
+	} else {
+		int montosSinCinturon[] = {0, 25, 50, 100};
+		total += montosSinCinturon[v.multaPorSinCinturon];
+	}
 	int montosExcesoVelocidad[] =   {0, 100, 250, 500};
 	total += montosEstadoEtilico[v.multaPorEstadoEtilico];
-	total += montosSinCinturon[v.multaPorSinCinturon];
 	total += montosExcesoVelocidad[v.multaPorSobrepasarLimiteDeVelocidad];
 	
 	return total;
